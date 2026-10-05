@@ -1,0 +1,310 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Task & Compliance Manager</title>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js"></script>
+<style>
+:root{--ink:#172033;--muted:#64748b;--line:#e2e8f0;--bg:#f3f6fb;--blue:#1d4ed8;--nav:#111827;--white:#fff;--red:#b91c1c;--green:#047857;--amber:#b45309}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 "Segoe UI",Arial,sans-serif}button,input,select,textarea{font:inherit}button{cursor:pointer}.hidden{display:none!important}
+header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 22px;background:var(--nav);color:#fff}header h1{font-size:20px;margin:0}.userbar{font-size:12px;color:#d1d5db}
+.layout{display:flex;min-height:calc(100vh - 58px)}aside{width:220px;background:#fff;border-right:1px solid var(--line);padding:12px;flex-shrink:0}aside button{display:block;width:100%;text-align:left;border:0;background:transparent;padding:11px;border-radius:8px;margin:3px 0;color:#334155}aside button.active,aside button:hover{background:#eff6ff;color:var(--blue);font-weight:600}main{padding:22px;min-width:0;flex:1;overflow:auto}.page{display:none}.page.active{display:block}h2{margin:0 0 14px}h3{margin:0 0 10px}.muted{color:var(--muted);font-size:12px}.grid{display:grid;grid-template-columns:repeat(4,minmax(135px,1fr));gap:12px}.card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:14px}.metric{font-size:28px;font-weight:700}.toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:12px 0}.btn{border:1px solid #cbd5e1;border-radius:7px;padding:9px 12px;background:#fff;color:#1f2937}.btn.primary{background:var(--blue);color:#fff;border-color:var(--blue)}.btn.danger{color:var(--red)}input,select,textarea{padding:9px;border:1px solid #cbd5e1;border-radius:7px;background:#fff;max-width:100%}input[type=checkbox]{width:auto}label{font-size:12px;color:var(--muted);display:block;margin-bottom:4px}.formgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.formgrid>div{min-width:0}.formgrid input,.formgrid select,.formgrid textarea{width:100%}.formgrid .full{grid-column:1/-1}textarea{min-height:75px;resize:vertical}.tablewrap{overflow:auto;max-height:62vh;border:1px solid var(--line);border-radius:9px;background:#fff}table{border-collapse:collapse;width:100%;font-size:12px}th,td{padding:9px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top;max-width:260px;overflow-wrap:anywhere}th{position:sticky;top:0;background:#f8fafc;z-index:1}.badge{display:inline-block;padding:3px 7px;border-radius:12px;background:#e2e8f0;font-size:11px}.badge.red{background:#fee2e2;color:#991b1b}.badge.green{background:#d1fae5;color:#065f46}.badge.amber{background:#fef3c7;color:#92400e}.modal{display:none;position:fixed;inset:0;background:#0008;z-index:10;align-items:center;justify-content:center;padding:16px}.modal.open{display:flex}.modalbox{background:#fff;border-radius:12px;padding:20px;width:min(1000px,97vw);max-height:92vh;overflow:auto}.notice{padding:11px 13px;border-radius:8px;background:#fffbeb;color:#92400e;margin:10px 0}.success{background:#ecfdf5;color:#065f46}.dangertext{color:var(--red)}.options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.chip{display:inline-flex;align-items:center;gap:6px;background:#eef2ff;border-radius:14px;padding:5px 8px;margin:3px;font-size:12px}.chip button{border:0;background:none}.fieldchecks{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px}.fieldchecks label{color:#334155;font-size:12px}.login{max-width:420px;margin:8vh auto;background:#fff;border:1px solid var(--line);border-radius:14px;padding:26px}.login input{width:100%;margin:5px 0 12px}.login h1{margin-top:0}.small{font-size:11px}@media(max-width:850px){aside{width:165px}.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.formgrid{grid-template-columns:repeat(2,minmax(0,1fr))}.fieldchecks{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:600px){.layout{display:block}aside{width:100%;display:flex;overflow:auto}aside button{white-space:nowrap;width:auto}main{padding:12px}.formgrid{grid-template-columns:1fr}.formgrid .full{grid-column:auto}.grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+</style></head><body>
+<div id="loginView" class="login"><h1>Task & Compliance Manager</h1><p class="muted">Sign in to manage assigned tasks, compliance timelines and approvals.</p><div id="loginAlert"></div><form id="loginForm"><label>User ID</label><input id="loginUser" autocomplete="username" required value="admin"><label>Password</label><input id="loginPass" type="password" autocomplete="current-password" required><button class="btn primary" style="width:100%">Sign in</button></form><p class="muted small">First login: admin / Admin@123. Change this password in User Management after signing in.</p></div>
+<div id="appView" class="hidden"><header><h1>📋 Task & Compliance Manager</h1><div class="userbar"><span id="who"></span> &nbsp; <button class="btn" onclick="logout()">Sign out</button></div></header>
+<div class="layout"><aside id="nav">
+<button class="active" data-page="dashboard">📊 Dashboard & Alerts</button><button data-page="tasks">✅ Task Register</button><button data-page="extensions">🕒 Extension Requests</button><button data-page="reports">📄 Report Builder</button><button data-page="masters">⚙ Masters & Headings</button><button data-page="users">🔐 User Management</button><button data-page="data">⬆ Excel / Backup</button>
+</aside><main>
+<section id="dashboard" class="page active"><h2>Dashboard & Timeline Alerts</h2><div id="alertBanner"></div><div class="grid" id="metrics"></div><div class="card"><h3>Overdue and upcoming tasks</h3><div class="tablewrap"><table><thead><tr><th>Task</th><th>Assignee</th><th>Regulatory timeline</th><th>Assignee deadline</th><th>Status</th><th>Alert</th><th></th></tr></thead><tbody id="dueBody"></tbody></table></div></div></section>
+<section id="tasks" class="page"><h2>Task Register</h2><div class="toolbar"><input id="taskSearch" placeholder="Search tasks..." oninput="renderTasks()"><select id="filterAssignee" onchange="renderTasks()"><option value="">All assignees</option></select><select id="filterStatus" onchange="renderTasks()"><option value="">All statuses</option></select><select id="filterCategory" onchange="renderTasks()"><option value="">All Level 1 categories</option></select><select id="filterGroup" onchange="renderTasks()"><option value="">All task groups</option></select><button class="btn primary admin-only" onclick="openTask()">+ Create Task</button><button class="btn" onclick="document.getElementById('excelFile').click()">Import Excel</button></div><div class="tablewrap"><table><thead id="taskHead"></thead><tbody id="taskBody"></tbody></table></div></section>
+<section id="extensions" class="page"><h2>Assignee Deadline Extension Requests</h2><p class="muted">Assignees may request a revised Assignee Deadline with reasons. Admin can approve/reject and set the revised Assignee Deadline.</p><div id="extensionList"></div></section>
+<section id="reports" class="page"><h2>Flexible Report Builder</h2><div class="card"><p class="muted">Add any number of filters. Every field is available, including Category Levels 1–6 and custom fields. Example: Category Level 1 = RBI AND Category Level 2 = RAR.</p><div class="toolbar"><button class="btn" onclick="addReportFilter()">+ Add filter</button><button class="btn" onclick="clearReportFilters()">Clear filters</button></div><div id="reportFilters"></div><h3 style="margin-top:18px">Choose output fields</h3><div id="reportFields" class="fieldchecks"></div><div class="toolbar"><button class="btn primary" onclick="buildReport()">Generate report</button><button class="btn" onclick="exportReport('xlsx')">Export Excel</button><button class="btn" onclick="exportReport('csv')">Export CSV</button><button class="btn primary" onclick="openReportShare()">📤 Share Report</button><button class="btn" onclick="window.print()">Print / Save PDF</button></div></div><div id="reportOutput"></div></section>
+<section id="masters" class="page"><h2>Masters & Headings</h2><p class="muted">Configure dropdown options, task groups/cells, group-specific fields, required fields, and the six-level category hierarchy. Changes are retained in this browser and included in exports.</p><div class="card"><h3>Assignee Master</h3><p class="muted">Active users categorized as Assignee appear here and in the task assignment dropdown. Manage users in User Management.</p><div id="assigneeMasterList"></div></div><div id="masterArea" class="options"></div><div class="card"><h3>Task Group / Cell Master</h3>
+<p class="muted">Create separate task groups/cells and decide which fields are available and which are mandatory for each group. Removing a field from a group does not delete the field or existing data.</p>
+<div class="toolbar"><input id="newTaskGroupName" placeholder="e.g. RBI Cell, RAR Cell, Credit Risk Cell"><button class="btn primary" onclick="addTaskGroup()">+ Add task group</button></div>
+<div id="taskGroupList"></div>
+</div><div class="card"><h3>Custom task fields</h3><div id="customFieldChips"></div><div class="toolbar"><input id="newCustomField" placeholder="New field heading"><button class="btn primary" onclick="addCustomField()">Add field</button></div></div></section>
+<section id="users" class="page"><h2>User Management</h2><p class="muted">Admin creates accounts, categorizes each user as Assignee, Approval Authority, or Other, and controls field-level permissions.</p><div class="card"><h3>Create assignee account</h3><form id="userForm"><div class="formgrid"><div><label>User ID</label><input id="newUsername" required></div><div><label>Initial password</label><input id="newPassword" required minlength="8"></div><div><label>Display name</label><input id="newDisplay" required></div><div><label>User category</label><select id="newRole" required><option value="assignee">Assignee</option><option value="approval_authority">Approval Authority</option><option value="other">Other</option></select></div></div><h3 style="margin-top:15px">Editable fields for this user</h3><div id="permissionFields" class="fieldchecks"></div><div class="toolbar"><button class="btn primary">Create account</button></div></form></div><div class="card"><h3>Existing accounts</h3><div id="userList"></div></div><div class="card" id="userPasswordCard"><h3>Change My Password — User Level</h3><p class="muted">Each logged-in user can change their own password. The current password is required.</p><form id="passwordForm"><div class="formgrid"><div><label>Current password</label><input id="oldPassword" type="password" autocomplete="current-password" required></div><div><label>New password (minimum 8 characters)</label><input id="newPasswordSelf" type="password" minlength="8" autocomplete="new-password" required></div><div><label>Confirm new password</label><input id="confirmPasswordSelf" type="password" minlength="8" autocomplete="new-password" required></div></div><div class="toolbar"><button class="btn primary">Change my password</button></div></form></div>
+<div class="card" id="adminPasswordCard"><h3>Change Admin Password — Admin Level</h3><p class="muted">Only the Admin account can access this section. This changes the password of the Admin account itself.</p><form id="adminPasswordForm"><div class="formgrid"><div><label>Current Admin password</label><input id="adminOldPassword" type="password" autocomplete="current-password" required></div><div><label>New Admin password (minimum 8 characters)</label><input id="adminNewPassword" type="password" minlength="8" autocomplete="new-password" required></div><div><label>Confirm new Admin password</label><input id="adminConfirmPassword" type="password" minlength="8" autocomplete="new-password" required></div></div><div class="toolbar"><button class="btn primary">Change Admin password</button></div></form></div></section>
+<section id="data" class="page"><h2>Excel Import / Export & Backup</h2><div class="card"><h3>Excel upload</h3><p>Download the import template first. It contains the current Task Group/Cell and all configured fields. Fill the template and upload it as Excel/CSV. Additional columns are retained as custom fields.</p><div class="toolbar"><button class="btn primary" onclick="document.getElementById('excelFile').click()">Choose Excel / CSV file</button><button class="btn" onclick="downloadImportTemplate()">Download Excel Import Template</button><button class="btn" onclick="exportAllExcel()">Export full workbook</button><button class="btn" onclick="downloadJSON()">Download JSON backup</button><button class="btn" onclick="document.getElementById('jsonFile').click()">Restore JSON backup</button><input id="jsonFile" type="file" accept=".json" hidden onchange="restoreJSON(event)"><input id="excelFile" type="file" accept=".xlsx,.xls,.csv" hidden onchange="importExcel(event)"></div><div id="importMsg"></div></div><div class="notice"><b>Prototype security note:</b> this version stores accounts and data in the current browser only. It is suitable for a local demo, not for production multi-user use or sensitive compliance data. Production deployment requires a server-side database, hashed passwords, server-enforced permissions, audit logs, and email/notification service.</div></section>
+</main></div></div>
+<div id="taskModal" class="modal"><div class="modalbox"><h2 id="taskModalTitle">Task</h2><form id="taskForm"><div id="taskGroupChooser" class="card" style="margin-bottom:12px"><label>Task Group / Cell</label><select id="taskGroupSelect" required></select><div id="taskGroupHelp" class="muted" style="margin-top:6px"></div></div><div id="taskFormFields" class="formgrid"></div><div class="toolbar" style="justify-content:flex-end"><button type="button" class="btn" onclick="closeTask()">Cancel</button><button class="btn primary">Save task</button></div></form></div></div>
+<div id="extensionModal" class="modal"><div class="modalbox" style="max-width:620px"><h2>Request Assignee Deadline Extension</h2><form id="extensionForm"><input id="extTaskId" type="hidden"><div><label>Current Assignee Deadline</label><input id="extCurrent" disabled></div><div style="margin-top:10px"><label>Requested new Assignee Deadline</label><input id="extRequested" type="date" required></div><div style="margin-top:10px"><label>Reason / justification</label><textarea id="extReason" required></textarea></div><div class="toolbar"><button type="button" class="btn" onclick="document.getElementById('extensionModal').classList.remove('open')">Cancel</button><button class="btn primary">Submit request</button></div></form></div></div>
+<script>
+const BASE_FIELDS = ["Task ID", "Task Group", "Frequency", "For the period", "Category Level1", "Category level 2", "Category level 3", "Category level 4", "Category level 5", "Category level 6", "Task /Particular", "Task Date", "Asignee", "Regulatory Timeline", "Asignee Deadline", "Action Taken", "Full Status/Remarks", "Approval Required Yes/ No", "Approval level1", "Approval level2", "Approval level 3", "approval level4", "approval level 5", "approval level 6", "Final Approval", "Approval pending at", "Task Status(Not Started/Under Process/Completed)"];
+const INITIAL = {"tasks": [], "masters": {"Frequency": ["Daily", "Weekly", "Fortnightly", "Monthly", "Quarterly", "Half Yearly", "Yearly", "One Time"], "For the period": ["Current Month", "Current Quarter", "Current Half Year", "Current Financial Year"], "Category Level1": [], "Category level 2": [], "Category level 3": [], "Category level 4": [], "Category level 5": [], "Category level 6": [], "Approval Required Yes/ No": ["Yes", "No"], "Final Approval": ["Pending", "Approved", "Rejected"], "Approval pending at": ["Admin", "Approval Level 1", "Approval Level 2", "Approval Level 3", "Approval Level 4", "Approval Level 5", "Approval Level 6"], "Task Status(Not Started/Under Process/Completed)": ["Not Started", "Under Process", "Completed", "On Hold", "Cancelled"]}, "customFields": [], "users": [{"username": "admin", "password": "Admin@123", "role": "admin", "active": true, "editableFields": ["Task ID", "Frequency", "For the period", "Category Level1", "Category level 2", "Category level 3", "Category level 4", "Category level 5", "Category level 6", "Task /Particular", "Task Date", "Asignee", "Regulatory Timeline", "Asignee Deadline", "Action Taken", "Full Status/Remarks", "Approval Required Yes/ No", "Approval level1", "Approval level2", "Approval level 3", "approval level4", "approval level 5", "approval level 6", "Final Approval", "Approval pending at", "Task Status(Not Started/Under Process/Completed)"]}], "extensionRequests": [], "nextId": 1};
+let db = JSON.parse(localStorage.getItem("tcm_db")||"null") || JSON.parse(JSON.stringify(INITIAL));
+db.masters = db.masters || {}; db.customFields = db.customFields || []; db.tasks = db.tasks || [];
+db.extensionRequests = db.extensionRequests || []; db.users = db.users || []; db.categoryHeadings = db.categoryHeadings || [];
+db.taskGroups = db.taskGroups || [{id:"general",name:"General",active:true,fields:BASE_FIELDS.filter(f=>f!=="Task ID").map(f=>({field:f,required:false}))}];
+if(!db.taskGroups.some(g=>g.id==="general")) db.taskGroups.unshift({id:"general",name:"General",active:true,fields:BASE_FIELDS.filter(f=>f!=="Task ID").map(f=>({field:f,required:false}))});
+db.taskGroups.forEach(g=>{g.active=g.active!==false;g.fields=Array.isArray(g.fields)?g.fields.map(x=>typeof x==="string"?{field:x,required:false}:x).filter(x=>x&&x.field):[]});
+db.tasks.forEach(t=>{if(!t["Task Group"])t["Task Group"]="General";});
+db.users.forEach(u => { if (u.role === "approval authority" || u.role === "approval-authority") u.role = "approval_authority"; if (!u.role) u.role = "assignee"; if (!Array.isArray(u.editableFields)) u.editableFields = []; });
+if(db.users[0]?.role==="admin" && !db.users[0].editableFields.includes("Task Group")) db.users[0].editableFields.push("Task Group");
+let currentUser = null, currentReport = null, editingTaskId = null;
+const labels = {"Task Group":"Task Group / Cell","Asignee":"Assignee","Asignee Deadline":"Assignee Deadline","Task Status(Not Started/Under Process/Completed)":"Task Status","Category Level1":"Category Level 1","Category level 2":"Category Level 2","Category level 3":"Category Level 3","Category level 4":"Category Level 4","Category level 5":"Category Level 5","Category level 6":"Category Level 6","Approval Required Yes/ No":"Approval Required","Approval pending at":"Approval Pending At","Task /Particular":"Task / Particular"};
+const masterKeys = [
+["Frequency","Frequency"],["For the period","For the period"],["Category Level1","Category Level 1"],["Category level 2","Category Level 2"],["Category level 3","Category Level 3"],["Category level 4","Category Level 4"],["Category level 5","Category Level 5"],["Category level 6","Category Level 6"],["Approval Required Yes/ No","Approval Required"],["Approval level1","Approval Level 1"],["Approval level2","Approval Level 2"],["Approval level 3","Approval Level 3"],["approval level4","Approval Level 4"],["approval level 5","Approval Level 5"],["approval level 6","Approval Level 6"],["Final Approval","Final Approval"],["Approval pending at","Approval Pending At"],["Task Status(Not Started/Under Process/Completed)","Task Status"]];
+function save(){localStorage.setItem("tcm_db",JSON.stringify(db))}
+function esc(v){return String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+function allFields(){return ["Task Group",...BASE_FIELDS,...db.customFields.filter(f=>!BASE_FIELDS.includes(f)&&f!=="Task Group")]}
+function activeTaskGroups(){return db.taskGroups.filter(g=>g.active!==false)}
+function getTaskGroup(name){return db.taskGroups.find(g=>g.name===name)||db.taskGroups.find(g=>g.id===name)||db.taskGroups.find(g=>g.id==="general")||db.taskGroups[0]}
+function groupFieldConfig(group){return (group?.fields||[]).filter(x=>x&&x.field&&x.field!=="Task Group"&&x.field!=="Task ID")}
+function groupFields(group){return ["Task ID","Task Group",...groupFieldConfig(group).map(x=>x.field)]}
+function groupRequiredFields(group){return new Set(groupFieldConfig(group).filter(x=>x.required).map(x=>x.field))}
+function taskFields(t){return groupFields(getTaskGroup(t?.["Task Group"]))}
+function isAdmin(){return currentUser?.role==="admin"}
+function label(f){return labels[f]||f}
+function dateStr(v){if(!v)return "";if(typeof v==="number"&&window.XLSX){let d=XLSX.SSF.parse_date_code(v);return d?`${d.y}-${String(d.m).padStart(2,"0")}-${String(d.d).padStart(2,"0")}`:""}let s=String(v);if(s.includes("T"))s=s.slice(0,10);if(/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(s)){let [m,d,y]=s.split("/");return `${y}-${m.padStart(2,"0")}-${d.padStart(2,"0")}`}return s.slice(0,10)}
+function currentDate(){return new Date().toISOString().slice(0,10)}
+function status(t){return t["Task Status(Not Started/Under Process/Completed)"]||"Not Started"}
+function dueDate(t){return t["Regulatory Timeline"]||t["Asignee Deadline"]||""}
+function isComplete(t){return /completed|approved/i.test(status(t))}
+function alertType(t){let d=dueDate(t);if(!d||isComplete(t))return "";if(d<currentDate())return "OVERDUE";let days=(new Date(d)-new Date(currentDate()))/86400000;if(days<=3)return "Due in "+Math.ceil(days)+" day(s)";return ""}
+function showApp(){document.getElementById("loginView").classList.add("hidden");document.getElementById("appView").classList.remove("hidden");document.getElementById("who").textContent=(currentUser.display||currentUser.username)+" ("+currentUser.role+")";document.querySelectorAll(".admin-only").forEach(e=>e.classList.toggle("hidden",!isAdmin()));document.querySelectorAll("#nav button").forEach(b=>{let pg=b.dataset.page;if(["masters","users","data","extensions"].includes(pg)&&!isAdmin()&&pg!=="extensions")b.classList.add("hidden");else b.classList.remove("hidden")});renderAll()}
+function login(){let u=document.getElementById("loginUser").value.trim(),p=document.getElementById("loginPass").value;let user=db.users.find(x=>x.username.toLowerCase()===u.toLowerCase()&&x.password===p&&x.active!==false);if(!user){document.getElementById("loginAlert").innerHTML='<div class="notice dangertext">Invalid credentials or inactive account.</div>';return}currentUser=user;document.getElementById("loginAlert").innerHTML="";showApp()}
+document.getElementById("loginForm").onsubmit=e=>{e.preventDefault();login()};
+function logout(){currentUser=null;document.getElementById("appView").classList.add("hidden");document.getElementById("loginView").classList.remove("hidden");document.getElementById("loginPass").value=""}
+document.querySelectorAll("#nav button").forEach(b=>b.onclick=()=>{if(b.classList.contains("hidden"))return;document.querySelectorAll("#nav button").forEach(x=>x.classList.remove("active"));b.classList.add("active");document.querySelectorAll(".page").forEach(x=>x.classList.remove("active"));document.getElementById(b.dataset.page).classList.add("active");renderAll()});
+function canEditField(f){return isAdmin()||currentUser.editableFields?.includes(f)}
+function visibleTasks(){return isAdmin()?db.tasks:db.tasks.filter(t=>String(t["Asignee"]||"").toLowerCase()===currentUser.username.toLowerCase())}
+function renderAll(){updatePasswordPanels();renderDashboard();renderTasks();renderExtensions();renderMasters();renderUsers();renderSelects();renderReportFields();renderPermissionFields();renderTaskGroups()}
+function renderDashboard(){let ts=visibleTasks(),over=ts.filter(t=>alertType(t)==="OVERDUE"),up=ts.filter(t=>alertType(t)&&alertType(t)!=="OVERDUE"),done=ts.filter(isComplete);document.getElementById("metrics").innerHTML=[["Tasks",ts.length],["Completed",done.length],["Overdue",over.length],["Due within 3 days",up.length]].map(([a,b])=>`<div class="card"><div class="muted">${a}</div><div class="metric">${b}</div></div>`).join("");document.getElementById("alertBanner").innerHTML=over.length?`<div class="notice dangertext"><b>Timeline breach alert:</b> ${over.length} open task(s) have passed their due date.</div>`:up.length?`<div class="notice">Reminder: ${up.length} task(s) are due within 3 days.</div>`:`<div class="notice success">No overdue tasks in your visible task list.</div>`;let rows=ts.filter(t=>alertType(t)).sort((a,b)=>dueDate(a).localeCompare(dueDate(b)));document.getElementById("dueBody").innerHTML=rows.map(t=>`<tr><td>${esc(t["Task /Particular"])}</td><td>${esc(t["Asignee"])}</td><td>${esc(t["Regulatory Timeline"])}</td><td>${esc(t["Asignee Deadline"])}</td><td>${esc(status(t))}</td><td><span class="badge ${alertType(t)==="OVERDUE"?"red":"amber"}">${esc(alertType(t))}</span></td><td><button class="btn" onclick="openTask(${t["Task ID"]})">View / Edit</button></td></tr>`).join("")||'<tr><td colspan="7">No overdue or near-due tasks.</td></tr>'}
+function assigneeUsers(){return db.users.filter(u=>u.role==="assignee" && u.active!==false);}
+function renderSelects(){let ass=[...new Set([...assigneeUsers().map(u=>u.username),...db.tasks.map(t=>t["Asignee"]).filter(Boolean)])].sort();setSelect("filterAssignee",ass,"All assignees");setSelect("filterStatus",db.masters["Task Status(Not Started/Under Process/Completed)"]||[],"All statuses");setSelect("filterCategory",db.masters["Category Level1"]||[],"All Level 1 categories");setSelect("filterGroup",activeTaskGroups().map(g=>g.name),"All task groups");}
+function setSelect(id,arr,first){let e=document.getElementById(id);if(!e)return;let old=e.value;e.innerHTML=`<option value="">${esc(first)}</option>`+arr.map(v=>`<option value="${esc(v)}">${esc(v)}</option>`).join("");if(arr.includes(old))e.value=old}
+function taskFilter(t){let q=(document.getElementById("taskSearch")?.value||"").toLowerCase(),a=document.getElementById("filterAssignee")?.value||"",s=document.getElementById("filterStatus")?.value||"",c=document.getElementById("filterCategory")?.value||"";let g=document.getElementById("filterGroup")?.value||"";return (!q||JSON.stringify(t).toLowerCase().includes(q))&&(!a||t["Asignee"]===a)&&(!s||status(t)===s)&&(!c||t["Category Level1"]===c)&&(!g||t["Task Group"]===g)}
+function renderTasks(){let fs=allFields();document.getElementById("taskHead").innerHTML="<tr>"+["Task ID","Task Group","Task /Particular","Asignee","Regulatory Timeline","Asignee Deadline","Task Status(Not Started/Under Process/Completed)"].map(f=>`<th>${esc(label(f))}</th>`).join("")+"<th>Alert</th><th>Actions</th></tr>";let ts=visibleTasks().filter(taskFilter);document.getElementById("taskBody").innerHTML=ts.map(t=>`<tr>${["Task ID","Task Group","Task /Particular","Asignee","Regulatory Timeline","Asignee Deadline","Task Status(Not Started/Under Process/Completed)"].map(f=>`<td>${esc(f==="Task Status(Not Started/Under Process/Completed)"?status(t):t[f])}</td>`).join("")}<td>${alertType(t)?`<span class="badge ${alertType(t)==="OVERDUE"?"red":"amber"}">${esc(alertType(t))}</span>`:"—"}</td><td><button class="btn" onclick="openTask(${Number(t["Task ID"])})">Open</button> ${!isAdmin()&&!isComplete(t)?`<button class="btn" onclick="requestExtension(${Number(t["Task ID"])})">Request extension</button>`:""} ${isAdmin()?`<button class="btn danger" onclick="deleteTask(${Number(t["Task ID"])})">Delete</button>`:""}</td></tr>`).join("")||'<tr><td colspan="8">No tasks. Admin can create a task or import the Excel workbook.</td></tr>'}
+function makeField(f,t,readonly){
+ let v=t?.[f]??"",isDate=["Task Date","Regulatory Timeline","Asignee Deadline"].includes(f),isAssignee=f==="Asignee",isSelect=(db.masters[f]||[]).length>0;
+ let locked=readonly||!canEditField(f)||(!isAdmin()&&f==="Asignee"),el;
+ if(f==="Task Group") return "";
+ if(isAssignee){
+   let opts=[...new Set([...assigneeUsers().map(u=>u.username),...(v?[String(v)]:[])])].sort();
+   el=`<select data-field="${esc(f)}" ${locked?"disabled":""}><option value="">Select assignee</option>${opts.map(x=>`<option value="${esc(x)}" ${String(v)===String(x)?"selected":""}>${esc((db.users.find(u=>u.username===x)?.display)||x)} (${esc(x)})</option>`).join("")}</select>`;
+ }else if(isSelect){el=`<select data-field="${esc(f)}" ${locked?"disabled":""}><option value=""></option>${db.masters[f].map(x=>`<option value="${esc(x)}" ${String(v)===String(x)?"selected":""}>${esc(x)}</option>`).join("")}</select>`}
+ else if(f==="Action Taken"||f==="Full Status/Remarks"){el=`<textarea data-field="${esc(f)}" ${locked?"disabled":""}>${esc(v)}</textarea>`}
+ else{el=`<input data-field="${esc(f)}" value="${esc(v)}" ${isDate?'type="date"':'type="text"'} ${locked?"disabled":""}>`}
+ return `<div class="${["Task /Particular","Action Taken","Full Status/Remarks"].includes(f)?"full":""}"><label>${esc(label(f))}${locked&&!isAdmin()?" (read only)":""}</label>${el}</div>`;
+}
+function populateTaskGroupSelect(selected){
+ const s=document.getElementById("taskGroupSelect"); if(!s)return;
+ const groups=activeTaskGroups();
+ s.innerHTML=groups.map(g=>`<option value="${esc(g.name)}" ${g.name===selected?"selected":""}>${esc(g.name)}</option>`).join("");
+ if(!groups.some(g=>g.name===selected)) s.value=groups[0]?.name||"General";
+ s.onchange=()=>renderTaskGroupFields();
+}
+function renderTaskGroupFields(){
+ const name=document.getElementById("taskGroupSelect")?.value||"General",g=getTaskGroup(name);
+ const existing=editingTaskId?db.tasks.find(x=>Number(x["Task ID"])===Number(editingTaskId)):null;
+ const t=existing||window.__draftTask||Object.fromEntries(allFields().map(f=>[f,""]));
+ t["Task Group"]=name;
+ document.getElementById("taskGroupHelp").textContent=`Fields configured for this group: ${groupFieldConfig(g).length}. Required: ${groupRequiredFields(g).size}.`;
+ document.getElementById("taskFormFields").innerHTML=groupFields(g).filter(f=>f!=="Task ID"&&f!=="Task Group").map(f=>makeField(f,t,false)).join("");
+}
+function openTask(id){
+ let existing=id?db.tasks.find(t=>Number(t["Task ID"])===Number(id)):null;
+ if(!isAdmin()&&!existing){alert("Only admin can create tasks.");return}
+ if(existing&&!isAdmin()&&String(existing.Asignee||"").toLowerCase()!==currentUser.username.toLowerCase()){alert("You can only access tasks assigned to your user ID.");return}
+ editingTaskId=existing?Number(existing["Task ID"]):null;
+ let t=existing||Object.fromEntries(allFields().map(f=>[f,""]));
+ if(!existing){t["Task ID"]=db.nextId++;t["Task Status(Not Started/Under Process/Completed)"]="Not Started";t["Asignee"]=currentUser.username;t["Task Group"]=activeTaskGroups()[0]?.name||"General";}
+ window.__draftTask=t;
+ document.getElementById("taskModalTitle").textContent=existing?"Task "+existing["Task ID"]:"Create Task";
+ populateTaskGroupSelect(t["Task Group"]||"General");
+ renderTaskGroupFields();
+ document.getElementById("taskModal").classList.add("open");
+ document.getElementById("taskForm").dataset.isNew=existing?"0":"1";
+}
+function closeTask(){window.__draftTask=null;document.getElementById("taskModal").classList.remove("open")}
+document.getElementById("taskForm").onsubmit=e=>{e.preventDefault();let isNew=e.target.dataset.isNew==="1";let old=isNew?{}:db.tasks.find(t=>Number(t["Task ID"])===editingTaskId);let t={...(old||{})};let groupName=document.getElementById("taskGroupSelect")?.value||"General";let group=getTaskGroup(groupName);t["Task Group"]=groupName;let missing=[...groupRequiredFields(group)].filter(f=>{let el=document.querySelector(`#taskFormFields [data-field="${CSS.escape(f)}"]`);return !el||!String(el.value||"").trim()});if(missing.length){alert("Please complete required field(s):\n\n"+missing.map(label).join("\n"));return}document.querySelectorAll("#taskFormFields [data-field]").forEach(el=>{let f=el.dataset.field;if(!el.disabled&&(isAdmin()||currentUser.editableFields?.includes(f)))t[f]=el.value});if(isNew){t["Task ID"]=db.nextId++;if(!isAdmin())t["Asignee"]=currentUser.username;db.tasks.push(t)}else{let i=db.tasks.findIndex(x=>Number(x["Task ID"])===editingTaskId);db.tasks[i]=t}window.__draftTask=null;save();closeTask();renderAll()}
+function deleteTask(id){if(!isAdmin())return;if(confirm("Delete this task permanently?")){db.tasks=db.tasks.filter(t=>Number(t["Task ID"])!==Number(id));save();renderAll()}}
+function requestExtension(id){let t=db.tasks.find(x=>Number(x["Task ID"])===Number(id));document.getElementById("extTaskId").value=id;document.getElementById("extCurrent").value=t?.["Asignee Deadline"]||"";document.getElementById("extRequested").value=t?.["Asignee Deadline"]||"";document.getElementById("extReason").value="";document.getElementById("extensionModal").classList.add("open")}
+document.getElementById("extensionForm").onsubmit=e=>{e.preventDefault();let id=Number(document.getElementById("extTaskId").value),t=db.tasks.find(x=>Number(x["Task ID"])===id);if(!t||(!isAdmin()&&String(t.Asignee||"").toLowerCase()!==currentUser.username.toLowerCase()))return;db.extensionRequests.push({id:Date.now(),taskId:id,assignee:currentUser.username,currentDate:t["Asignee Deadline"]||"",requestedDate:document.getElementById("extRequested").value,reason:document.getElementById("extReason").value,decision:"Pending",requestedAt:new Date().toISOString(),decidedBy:"",decisionReason:""});save();document.getElementById("extensionModal").classList.remove("open");renderAll();alert("Extension request submitted.")};
+document.getElementById("adminPasswordForm").onsubmit=e=>{e.preventDefault();if(!isAdmin()){alert("Admin access only.");return}let admin=db.users.find(u=>u.role==="admin"),old=document.getElementById("adminOldPassword").value,n=document.getElementById("adminNewPassword").value,c=document.getElementById("adminConfirmPassword").value;if(!admin){alert("Admin account not found.");return}if(admin.password!==old){alert("Current Admin password is incorrect.");return}if(n.length<8){alert("New Admin password must be at least 8 characters.");return}if(n!==c){alert("New Admin password and confirmation do not match.");return}admin.password=n;if(currentUser.username===admin.username)currentUser.password=n;save();e.target.reset();alert("Admin password has been changed successfully.");};
+function updatePasswordPanels(){let admin=isAdmin();document.getElementById("adminPasswordCard")?.classList.toggle("hidden",!admin);document.getElementById("userPasswordCard")?.classList.toggle("hidden",false);}
+function renderExtensions(){let arr=isAdmin()?db.extensionRequests:db.extensionRequests.filter(x=>x.assignee.toLowerCase()===currentUser.username.toLowerCase());document.getElementById("extensionList").innerHTML=arr.slice().reverse().map(x=>{let t=db.tasks.find(t=>Number(t["Task ID"])===x.taskId);return `<div class="card"><div><b>Task #${x.taskId}: ${esc(t?.["Task /Particular"]||"Task deleted")}</b> <span class="badge ${x.decision==="Approved"?"green":x.decision==="Rejected"?"red":"amber"}">${esc(x.decision)}</span></div><p>Assignee: ${esc(x.assignee)} | Current Assignee Deadline: ${esc(x.currentDate)} | Requested Assignee Deadline: ${esc(x.requestedDate)}</p><p><b>Reason:</b> ${esc(x.reason)}</p>${x.decision!=="Pending"?`<p>Decision: ${esc(x.decisionReason)} (${esc(x.decidedBy)})</p>`:""}${isAdmin()&&x.decision==="Pending"?`<div class="toolbar"><input type="date" id="date_${x.id}" value="${esc(x.requestedDate)}"><input id="reason_${x.id}" placeholder="Admin decision remarks"><button class="btn primary" onclick="decideExtension(${x.id},true)">Approve & set deadline</button><button class="btn danger" onclick="decideExtension(${x.id},false)">Reject</button></div>`:""}</div>`}).join("")||'<div class="card">No extension requests.</div>'}
+function decideExtension(id,approve){if(!isAdmin())return;let x=db.extensionRequests.find(r=>r.id===id),d=document.getElementById("date_"+id)?.value,reason=document.getElementById("reason_"+id)?.value||"";if(approve&&!d){alert("Select the approved revised Assignee Deadline.");return}x.decision=approve?"Approved":"Rejected";x.decidedBy=currentUser.username;x.decisionReason=reason;if(approve){let t=db.tasks.find(t=>Number(t["Task ID"])===x.taskId);if(t)t["Asignee Deadline"]=d}save();renderAll()}
+function renderTaskGroups(){
+ const host=document.getElementById("taskGroupList"); if(!host)return;
+ const fields=allFields().filter(f=>!["Task ID","Task Group"].includes(f));
+ host.innerHTML=activeTaskGroups().map(g=>{
+   const cfg=Object.fromEntries(groupFieldConfig(g).map(x=>[x.field,x]));
+   return `<div class="card" style="margin-top:10px"><div class="toolbar" style="justify-content:space-between"><div><b>${esc(g.name)}</b> <span class="badge ${g.id==="general"?"green":"amber"}">${g.id==="general"?"Default":"Configurable"}</span></div><div>${g.id!=="general"?`<button class="btn danger" onclick="removeTaskGroup('${esc(g.id)}')">Remove group</button>`:""}</div></div><div class="muted">Select fields for this group. Tick Required for fields that must be completed when a task is created/edited.</div><div class="fieldchecks">${fields.map(f=>`<label style="display:grid;grid-template-columns:22px 1fr 85px;align-items:center;gap:6px"><input type="checkbox" ${cfg[f]?"checked":""} onchange="toggleGroupField('${esc(g.id)}','${esc(f)}',this.checked)"><span>${esc(label(f))}</span><span><input type="checkbox" ${cfg[f]?.required?"checked":""} ${cfg[f]?"":"disabled"} onchange="setGroupRequired('${esc(g.id)}','${esc(f)}',this.checked)"> Required</span></label>`).join("")}</div></div>`;
+ }).join("")||'<div class="notice">No task groups configured.</div>';
+}
+function addTaskGroup(){
+ if(!isAdmin())return;
+ const e=document.getElementById("newTaskGroupName"),name=e.value.trim();
+ if(!name)return;
+ if(db.taskGroups.some(g=>g.name.toLowerCase()===name.toLowerCase())){alert("Task group already exists.");return}
+ db.taskGroups.push({id:"g_"+Date.now(),name,active:true,fields:[]});e.value="";save();renderAll();
+}
+function toggleGroupField(id,field,enabled){
+ const g=db.taskGroups.find(x=>x.id===id);if(!g)return;
+ let i=g.fields.findIndex(x=>x.field===field);
+ if(enabled){if(i<0)g.fields.push({field,required:false})}
+ else if(i>=0)g.fields.splice(i,1);
+ save();renderTaskGroups();
+}
+function setGroupRequired(id,field,required){
+ const g=db.taskGroups.find(x=>x.id===id),x=g?.fields.find(x=>x.field===field);if(!x)return;x.required=required;save();renderTaskGroups();
+}
+function removeTaskGroup(id){
+ if(id==="general")return;
+ const g=db.taskGroups.find(x=>x.id===id);if(!g)return;
+ if(!confirm(`Remove task group "${g.name}"? Existing tasks will be moved to General.`))return;
+ db.tasks.forEach(t=>{if(t["Task Group"]===g.name)t["Task Group"]="General"});
+ db.taskGroups=db.taskGroups.filter(x=>x.id!==id);save();renderAll();
+}
+function renderMasters(){
+ if(!isAdmin()){document.getElementById("masterArea").innerHTML='<div class="card">Only admin can manage masters.</div>';return}
+ document.getElementById("assigneeMasterList").innerHTML=assigneeUsers().length
+ ? '<div class="tablewrap"><table><thead><tr><th>User ID</th><th>Display name</th><th>Category</th><th>Active</th></tr></thead><tbody>'+assigneeUsers().map(u=>`<tr><td>${esc(u.username)}</td><td>${esc(u.display||u.username)}</td><td>Assignee</td><td>Yes</td></tr>`).join("")+'</tbody></table></div>'
+ : '<div class="notice">No active Assignee-category users yet. Add one in User Management.</div>';
+ document.getElementById("masterArea").innerHTML=masterKeys.map(([key,title])=>`<div class="card"><h3>${esc(title)}</h3><div>${(db.masters[key]||[]).map((v,i)=>`<span class="chip">${esc(v)} <button onclick="removeMaster('${key}',${i})">×</button></span>`).join("")}</div><div class="toolbar"><input id="add_${key}" placeholder="Add option"><button class="btn primary" onclick="addMaster('${key}')">Add</button></div></div>`).join("")+`<div class="card"><h3>Rename category level headings</h3>${[1,2,3,4,5,6].map(n=>`<div class="toolbar"><label>Level ${n}</label><input id="heading${n}" value="${esc(db.categoryHeadings?.[n-1]||"Category Level "+n)}"><button class="btn" onclick="renameHeading(${n})">Rename</button></div>`).join("")}</div>`;
+ document.getElementById("customFieldChips").innerHTML=db.customFields.map((f,i)=>`<span class="chip">${esc(f)} <button onclick="removeCustomField(${i})">×</button></span>`).join("")||'<span class="muted">No custom fields.</span>';
+}
+function addMaster(k){let e=document.getElementById("add_"+k),v=e.value.trim();if(!v)return;db.masters[k]=db.masters[k]||[];if(!db.masters[k].includes(v))db.masters[k].push(v);save();renderAll()}
+function removeMaster(k,i){if(confirm("Remove this dropdown option? Existing task values will be preserved.")){db.masters[k].splice(i,1);save();renderAll()}}
+function renameHeading(n){let v=document.getElementById("heading"+n).value.trim();if(!v)return;db.categoryHeadings=db.categoryHeadings||[];db.categoryHeadings[n-1]=v;save();renderAll();alert("Heading updated. Workbook field keys remain unchanged for import/export compatibility.")}
+function addCustomField(){let v=document.getElementById("newCustomField").value.trim();if(!v||allFields().includes(v))return;db.customFields.push(v);save();renderAll()}
+function removeCustomField(i){if(confirm("Remove this field from the form and reports? Existing values in tasks may remain in saved data.")){db.customFields.splice(i,1);save();renderAll()}}
+function roleLabel(role){return ({admin:"Admin",assignee:"Assignee",approval_authority:"Approval Authority",other:"Other"})[role]||role}
+function renderUsers(){if(!isAdmin()){document.getElementById("userList").innerHTML="Admin access only.";return}document.getElementById("userList").innerHTML='<div class="tablewrap"><table><thead><tr><th>User ID</th><th>Name</th><th>Role</th><th>Active</th><th>Field permissions</th><th>Action</th></tr></thead><tbody>'+db.users.map((u,i)=>`<tr><td>${esc(u.username)}</td><td>${esc(u.display||u.username)}</td><td>${esc(roleLabel(u.role))}</td><td>${u.active!==false?"Yes":"No"}</td><td>${u.role==="admin"?"Full access":esc((u.editableFields||[]).map(label).join(", "))}</td><td>${u.role!=="admin"?`<button class="btn" onclick="toggleUser(${i})">${u.active===false?"Activate":"Deactivate"}</button> <button class="btn" onclick="editPermissions(${i})">Edit field permissions</button> <button class="btn danger" onclick="resetUserPassword(${i})">Reset password</button>`:"Admin"}</td></tr>`).join("")+'</tbody></table></div>'}
+function renderPermissionFields(){let fs=allFields();document.getElementById("permissionFields").innerHTML=fs.map(f=>`<label><input type="checkbox" value="${esc(f)}" ${["Action Taken","Full Status/Remarks","Asignee Deadline","Task Status(Not Started/Under Process/Completed)"].includes(f)?"checked":""}> ${esc(label(f))}</label>`).join("")}
+document.getElementById("userForm").onsubmit=e=>{e.preventDefault();if(!isAdmin())return;let username=document.getElementById("newUsername").value.trim();if(db.users.some(u=>u.username.toLowerCase()===username.toLowerCase())){alert("User ID already exists.");return}let editable=[...document.querySelectorAll("#permissionFields input:checked")].map(x=>x.value);db.users.push({username,password:document.getElementById("newPassword").value,display:document.getElementById("newDisplay").value.trim(),role:document.getElementById("newRole").value,active:true,editableFields:editable});save();e.target.reset();renderAll();alert("User account created. Share credentials securely.")};
+function toggleUser(i){db.users[i].active=db.users[i].active===false;save();renderAll()}
+function resetUserPassword(i){let p=prompt("Enter a new temporary password (at least 8 characters):");if(p&&p.length>=8){db.users[i].password=p;save();alert("Password reset. Share it securely with the user.")}else if(p)alert("Password must be at least 8 characters.")}
+function editPermissions(i){
+ let u=db.users[i],fs=allFields(),selected=new Set(u.editableFields||[]);
+ const box=`<div class="modal open" id="permModal"><div class="modalbox" style="max-width:850px;max-height:85vh;overflow:auto"><h2>Edit field permissions — ${esc(u.username)}</h2><p class="muted">Tick the fields this user is allowed to edit. Changes take effect after saving.</p><div class="toolbar"><button type="button" class="btn" onclick="document.querySelectorAll('#permChecks input').forEach(x=>x.checked=true)">Select all</button><button type="button" class="btn" onclick="document.querySelectorAll('#permChecks input').forEach(x=>x.checked=false)">Clear all</button></div><div id="permChecks" class="fieldchecks">${fs.map(f=>`<label><input type="checkbox" value="${esc(f)}" ${selected.has(f)?"checked":""}> ${esc(label(f))}</label>`).join("")}</div><div class="toolbar"><button type="button" class="btn primary" onclick="savePermissions(${i})">Save permissions</button><button type="button" class="btn" onclick="document.getElementById('permModal').remove()">Cancel</button></div></div></div>`;
+ document.getElementById("permModal")?.remove();document.body.insertAdjacentHTML("beforeend",box);
+}
+function savePermissions(i){if(!isAdmin())return;db.users[i].editableFields=[...document.querySelectorAll("#permChecks input:checked")].map(x=>x.value);save();document.getElementById("permModal")?.remove();renderAll();alert("Editable field permissions saved.");}
+document.getElementById("passwordForm").onsubmit=e=>{e.preventDefault();let old=document.getElementById("oldPassword").value,n=document.getElementById("newPasswordSelf").value,c=document.getElementById("confirmPasswordSelf").value;if(currentUser.password!==old){alert("Current password is incorrect.");return}if(n.length<8){alert("New password must be at least 8 characters.");return}if(n!==c){alert("New password and confirmation do not match.");return}currentUser.password=n;let idx=db.users.findIndex(u=>u.username===currentUser.username);if(idx>=0)db.users[idx].password=n;save();e.target.reset();alert("Your password has been changed successfully.");};
+function renderReportFields(){let fs=allFields();document.getElementById("reportFields").innerHTML=fs.map((f,i)=>`<label><input type="checkbox" value="${esc(f)}" ${["Task ID","Task Group","Task /Particular","Asignee","Regulatory Timeline","Asignee Deadline","Task Status(Not Started/Under Process/Completed)"].includes(f)?"checked":""}> ${esc(label(f))}</label>`).join("")}
+let reportFilterCount=0;
+function addReportFilter(field="",operator="equals",value=""){
+ const id=++reportFilterCount,fields=allFields(),row=document.createElement("div");
+ row.className="formgrid";row.style.marginBottom="10px";row.dataset.filterId=id;
+ row.innerHTML=`<div><label>Field</label><select class="rf-field">${fields.map(f=>`<option value="${esc(f)}" ${field===f?"selected":""}>${esc(label(f))}</option>`).join("")}</select></div><div><label>Condition</label><select class="rf-op"><option value="equals">Equals</option><option value="contains">Contains</option><option value="not_equals">Does not equal</option><option value="empty">Is empty</option><option value="not_empty">Is not empty</option><option value="before">Before</option><option value="after">After</option></select></div><div><label>Value</label><div style="display:flex;gap:6px"><input class="rf-value" placeholder="Enter/select value" value="${esc(value)}" style="flex:1;min-width:0"><button type="button" class="btn danger">×</button></div></div>`;
+ row.querySelector(".rf-op").value=operator;row.querySelector("button").onclick=()=>row.remove();
+ const fieldSel=row.querySelector(".rf-field"),val=row.querySelector(".rf-value");
+ fieldSel.onchange=()=>{const vals=[...new Set(visibleTasks().map(t=>String(t[fieldSel.value]??"")).filter(Boolean))].sort();const listId="rfList_"+id;let dl=document.getElementById(listId);if(vals.length&&vals.length<100){if(!dl){dl=document.createElement("datalist");dl.id=listId;row.appendChild(dl)}dl.innerHTML=vals.map(v=>`<option value="${esc(v)}">`).join("");val.setAttribute("list",listId)}else{val.removeAttribute("list");dl?.remove()}};
+ fieldSel.onchange();document.getElementById("reportFilters").appendChild(row);
+}
+function clearReportFilters(){document.getElementById("reportFilters").innerHTML="";reportFilterCount=0;currentReport=null;}
+function reportRows(){
+ const filters=[...document.querySelectorAll("#reportFilters [data-filter-id]")].map(row=>({field:row.querySelector(".rf-field").value,op:row.querySelector(".rf-op").value,value:row.querySelector(".rf-value").value}));
+ return visibleTasks().filter(t=>filters.every(({field,op,value})=>{const actual=String(t[field]??""),a=actual.toLowerCase(),v=String(value??"").toLowerCase();switch(op){case "equals":return a===v;case "contains":return a.includes(v);case "not_equals":return a!==v;case "empty":return !actual.trim();case "not_empty":return !!actual.trim();case "before":return actual<v;case "after":return actual>v;default:return true}}));
+}
+function buildReport(){let fs=[...document.querySelectorAll("#reportFields input:checked")].map(x=>x.value);if(!fs.length){alert("Select at least one output field.");return}let rows=reportRows();currentReport={fs,rows};document.getElementById("reportOutput").innerHTML=`<div class="card"><b>${rows.length} record(s)</b></div><div class="tablewrap"><table><thead><tr>${fs.map(f=>`<th>${esc(label(f))}</th>`).join("")}</tr></thead><tbody>${rows.map(t=>`<tr>${fs.map(f=>`<td>${esc(t[f]??"")}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`}
+function exportReport(kind){if(!currentReport)buildReport();if(!currentReport)return;let {fs,rows}=currentReport;let data=rows.map(t=>Object.fromEntries(fs.map(f=>[label(f),t[f]??""])));if(kind==="csv"){let csv=[Object.keys(data[0]||Object.fromEntries(fs.map(f=>[label(f),""]))).join(","),...data.map(r=>Object.values(r).map(v=>'"'+String(v??"").replace(/"/g,'""')+'"').join(","))].join("\\n");downloadBlob(csv,"Task_Compliance_Report.csv","text/csv")}else{if(!window.XLSX){alert("Excel library unavailable. Check internet connection.");return}let wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(data),"Report");XLSX.writeFile(wb,"Task_Compliance_Report.xlsx")}}
+function reportData(){
+ if(!currentReport)buildReport();
+ if(!currentReport)return null;
+ const {fs,rows}=currentReport;
+ return {fs,rows,data:rows.map(t=>Object.fromEntries(fs.map(f=>[label(f),t[f]??""])))};
+}
+function reportCsv(){
+ const r=reportData();if(!r)return "";
+ const headers=r.fs.map(f=>label(f));
+ return [headers.map(v=>'"'+String(v??"").replace(/"/g,'""')+'"').join(","),...r.data.map(row=>headers.map(h=>'"'+String(row[h]??"").replace(/"/g,'""')+'"').join(","))].join("\n");
+}
+function reportShareText(){
+ const r=reportData();if(!r)return "";
+ const lines=["Task & Compliance Manager — Shared Report","Records: "+r.rows.length,"",r.fs.map(f=>label(f)).join(" | ")];
+ const max=40;
+ r.rows.slice(0,max).forEach(t=>lines.push(r.fs.map(f=>String(t[f]??"").replace(/\r?\n/g," ")).join(" | ")));
+ if(r.rows.length>max)lines.push("",`… ${r.rows.length-max} more record(s). Please use Device Share/Export for the complete report.`);
+ return lines.join("\n");
+}
+function getReportFormat(){return document.getElementById("shareReportFormat")?.value||"pdf"}
+function reportFile(format){
+ const r=reportData();if(!r)return null;
+ const safe=(v)=>String(v??"");
+ if(format==="csv") return {blob:new Blob([reportCsv()],{type:"text/csv;charset=utf-8"}),name:"Task_Compliance_Report.csv",mime:"text/csv"};
+ if(format==="xlsx"){
+  if(!window.XLSX){alert("Excel library unavailable. Check internet connection.");return null}
+  const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(r.data),"Report");
+  const out=XLSX.write(wb,{bookType:"xlsx",type:"array"});
+  return {blob:new Blob([out],{type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"}),name:"Task_Compliance_Report.xlsx",mime:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"};
+ }
+ if(format==="pdf"){
+  if(!window.jspdf?.jsPDF){alert("PDF library unavailable. Check internet connection.");return null}
+  const doc=new jspdf.jsPDF({orientation:r.fs.length>7?"landscape":"portrait",unit:"pt",format:"a4"});
+  doc.setFontSize(14);doc.text("Task & Compliance Manager — Report",40,35);
+  doc.setFontSize(9);doc.text(`Records: ${r.rows.length}`,40,50);
+  const head=[r.fs.map(f=>label(f))],body=r.rows.map(t=>r.fs.map(f=>safe(t[f])));
+  doc.autoTable({head,body,startY:62,styles:{fontSize:r.fs.length>8?6:7,cellPadding:3,overflow:"line"},headStyles:{fontSize:r.fs.length>8?6:7},margin:{left:30,right:30,top:30,bottom:30}});
+  return {blob:doc.output("blob"),name:"Task_Compliance_Report.pdf",mime:"application/pdf"};
+ }
+ return {blob:new Blob([reportShareText()],{type:"text/plain;charset=utf-8"}),name:"Task_Compliance_Report.txt",mime:"text/plain"};
+}
+function openReportShare(){
+ if(!reportData())return;
+ document.getElementById("reportShareModal")?.remove();
+ const box=`<div class="modal open" id="reportShareModal"><div class="modalbox" style="max-width:700px"><h2>📤 Share Report</h2><p class="muted">Select the format you want to share, then choose the sharing method.</p><div class="card" style="margin:12px 0"><label><b>1. Select report format</b></label><select id="shareReportFormat" style="width:100%;margin-top:6px"><option value="pdf">PDF</option><option value="xlsx">Excel (.xlsx)</option><option value="csv">CSV</option><option value="txt">Text summary</option></select><p class="muted" style="margin-top:6px">The selected format contains the currently generated report and applied filters.</p></div><div class="card"><label><b>2. Select sharing method</b></label><div class="toolbar"><button class="btn primary" onclick="shareReportDevice()">📱 Device Share / Attach</button><button class="btn" onclick="shareReportWhatsApp()">🟢 WhatsApp</button><button class="btn" onclick="shareReportEmail()">✉ Email</button><button class="btn" onclick="downloadSelectedReport()">⬇ Download File</button><button class="btn" onclick="copyReportShare()">📋 Copy Summary</button></div></div><div class="notice"><b>Important:</b> Device Share can attach the selected PDF/Excel/CSV file where the browser/device supports file sharing. WhatsApp and Email web links cannot automatically attach a local file, so for those channels the selected file is downloaded and the report summary is opened for sharing.</div><div class="toolbar"><button class="btn" onclick="document.getElementById('reportShareModal').remove()">Close</button></div></div></div>`;
+ document.body.insertAdjacentHTML("beforeend",box);
+}
+async function shareReportDevice(){
+ const format=getReportFormat(),f=reportFile(format);if(!f)return;
+ if(navigator.share){
+  try{
+   if(format!=="txt"){
+    const file=new File([f.blob],f.name,{type:f.mime});
+    if(navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({title:"Task & Compliance Report",text:"Filtered compliance report",files:[file]});return;}
+   }
+   await navigator.share({title:"Task & Compliance Report",text:reportShareText()});return;
+  }catch(e){if(e?.name==="AbortError")return;}
+ }
+ downloadSelectedReport();
+ alert("Device file sharing is not available in this browser. The selected report file has been downloaded.");
+}
+function shareReportWhatsApp(){
+ const format=getReportFormat();
+ if(format!=="txt")downloadSelectedReport();
+ window.open("https://wa.me/?text="+encodeURIComponent(reportShareText().slice(0,6000)),"_blank","noopener");
+}
+function shareReportEmail(){
+ const format=getReportFormat();
+ if(format!=="txt")downloadSelectedReport();
+ const subject=`Task & Compliance Report (${format.toUpperCase()})`;
+ window.location.href="mailto:?subject="+encodeURIComponent(subject)+"&body="+encodeURIComponent(reportShareText().slice(0,12000));
+}
+async function copyReportShare(){
+ const text=reportShareText();
+ try{await navigator.clipboard.writeText(text);alert("Report summary copied to clipboard.");}
+ catch(e){const ta=document.createElement("textarea");ta.value=text;document.body.appendChild(ta);ta.select();document.execCommand("copy");ta.remove();alert("Report summary copied to clipboard.");}
+}
+function downloadSelectedReport(){
+ const f=reportFile(getReportFormat());if(!f)return;downloadBlob(f.blob,f.name,f.mime);
+}
+function downloadSharedReportCsv(){const csv=reportCsv();if(csv)downloadBlob(csv,"Task_Compliance_Report.csv","text/csv")}
+function excelRows(){return db.tasks.map(t=>{let r={};allFields().forEach(f=>r[f]=t[f]??"");return r})}
+function exportAllExcel(){if(!isAdmin()){alert("Only admin can export the full register.");return}if(!window.XLSX){alert("Excel export needs an internet connection to load the spreadsheet library.");return}let wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(excelRows()),"Tasks");let m=[];Object.entries(db.masters).forEach(([k,arr])=>arr.forEach(v=>m.push({"Master Heading":k,"Option":v})));XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(m),"Masters");XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(db.extensionRequests),"Extension Requests");XLSX.writeFile(wb,"Task_Compliance_Manager.xlsx")}
+function downloadImportTemplate(){
+ const fields=allFields();
+ const rows=[fields];
+ // Provide one illustrative blank/example row while keeping import-safe headers.
+ const example={};
+ const groups=activeTaskGroups();
+ if(groups.length) example["Task Group"]=groups[0].name;
+ example["Task /Particular"]="Example task — replace or delete this row";
+ example["Asignee"]="";
+ example["Task Status(Not Started/Under Process/Completed)"]="Not Started";
+ rows.push(fields.map(f=>example[f]??""));
+ const csv=rows.map(r=>r.map(v=>`"${String(v??"").replace(/"/g,'""')}"`).join(",")).join("\n");
+ const blob=new Blob([csv],{type:"text/csv;charset=utf-8;"});
+ const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="Task_Compliance_Import_Template.csv";a.click();URL.revokeObjectURL(a.href);
+}
+function importExcel(ev){let file=ev.target.files[0];if(!file)return;if(!isAdmin()){alert("Only admin can import Excel.");ev.target.value="";return}if(!window.XLSX){alert("Excel import needs an internet connection.");return}let rd=new FileReader();rd.onload=e=>{try{let wb=XLSX.read(e.target.result,{type:"array",cellDates:true});let sheetName=wb.SheetNames.includes("Tasks")?"Tasks":wb.SheetNames[0];let rows=XLSX.utils.sheet_to_json(wb.Sheets[sheetName],{defval:""});if(!rows.length){alert("The selected task sheet contains no records. No data imported.");return}let mapped=rows.map((r,i)=>{let t={};allFields().forEach(f=>{let actual=Object.keys(r).find(k=>k.trim().toLowerCase()===f.trim().toLowerCase());let v=actual?r[actual]:"";t[f]=["Task Date","Regulatory Timeline","Asignee Deadline"].includes(f)?dateStr(v):String(v??"")});let id=Number(t["Task ID"]);t["Task ID"]=id||db.nextId++;t["Task Group"]=t["Task Group"]||"General";Object.keys(r).forEach(k=>{if(!allFields().some(f=>f.trim().toLowerCase()===k.trim().toLowerCase())){let cf=k.trim();if(cf&&!db.customFields.includes(cf))db.customFields.push(cf);t[cf]=String(r[k]??"")}});return t});let mode=confirm("OK = append imported tasks. Cancel = replace current task register.");if(!mode)db.tasks=[];let idset=new Set(db.tasks.map(t=>Number(t["Task ID"])));mapped.forEach(t=>{if(idset.has(Number(t["Task ID"]))){t["Task ID"]=db.nextId++}db.tasks.push(t)});db.nextId=Math.max(db.nextId,...db.tasks.map(t=>Number(t["Task ID"]||0)+1));if(wb.SheetNames.includes("Masters")){let mr=XLSX.utils.sheet_to_json(wb.Sheets["Masters"],{defval:""});mr.forEach(r=>{let k=r["Master Heading"]||r["Field"]||"",v=r.Option||r.Value||"";if(k&&v){db.masters[k]=db.masters[k]||[];if(!db.masters[k].includes(String(v)))db.masters[k].push(String(v))}})}save();renderAll();document.getElementById("importMsg").innerHTML=`<div class="notice success">Imported ${mapped.length} task(s) from ${esc(file.name)}.</div>`;alert("Excel import completed.")}catch(err){alert("Import failed: "+err.message)}finally{ev.target.value=""}};rd.readAsArrayBuffer(file)}
+function downloadJSON(){downloadBlob(JSON.stringify(db,null,2),"Task_Compliance_Backup.json","application/json")}
+function restoreJSON(ev){if(!isAdmin())return;let f=ev.target.files[0];if(!f)return;let rd=new FileReader();rd.onload=e=>{try{db=JSON.parse(e.target.result);save();renderAll();alert("Backup restored.")}catch(err){alert("Invalid JSON backup.")}};rd.readAsText(f)}
+function downloadBlob(content,name,type){let a=document.createElement("a");a.href=URL.createObjectURL(new Blob([content],{type}));a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
+// Admin can edit any record; assignee's edit controls are limited to assigned records and granted fields.
+renderPermissionFields();
+if(document.getElementById("reportFilters") && !document.getElementById("reportFilters").children.length) addReportFilter();
+save();
+</script></body></html>
